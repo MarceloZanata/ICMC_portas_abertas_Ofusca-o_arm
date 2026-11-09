@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O Segredo do Código</title>
+<style>
+  :root{
+    --bg:#0a0d14; --panel:#111624; --panel2:#161c2e; --line:#243050;
+    --green:#39ff88; --purple:#a77bff; --cyan:#4de2ff; --red:#ff5c7a; --yellow:#ffd866;
+    --text:#d7e0f5; --muted:#7f8bab;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:radial-gradient(circle at 20% 0%,#16102b 0%,var(--bg) 45%) fixed;
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh; padding:24px 16px 48px;
+  }
+  .wrap{max-width:1150px;margin:0 auto}
+  header{text-align:center;margin-bottom:22px}
+  h1{
+    font-family:ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    font-size:clamp(20px,3.6vw,38px); color:var(--green);
+    text-shadow:0 0 14px rgba(57,255,136,.55);
+    min-height:1.3em;
+  }
+  .cursor{display:inline-block;width:.55em;background:var(--green);animation:blink 1s steps(2) infinite;margin-left:3px}
+  @keyframes blink{50%{opacity:0}}
+  .sub{margin-top:8px;color:var(--muted);font-size:clamp(14px,2vw,18px)}
+  .badges{margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .badge{
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;padding:5px 11px;
+    border-radius:999px;border:1px solid var(--purple);color:var(--purple);background:rgba(167,123,255,.08)
+  }
+  .badge.g{border-color:var(--green);color:var(--green);background:rgba(57,255,136,.08)}
+  .badge.c{border-color:var(--cyan);color:var(--cyan);background:rgba(77,226,255,.08)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .card.good{border-color:rgba(57,255,136,.45);box-shadow:0 0 24px rgba(57,255,136,.08)}
+  .card.bad{border-color:rgba(255,92,122,.45);box-shadow:0 0 24px rgba(255,92,122,.08)}
+  .card-h{
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    padding:12px 16px;background:var(--panel2);border-bottom:1px solid var(--line);
+    font-weight:700;font-size:15px;
+  }
+  .good .card-h{color:var(--green)} .bad .card-h{color:var(--red)}
+  .mood{font-weight:500;font-size:13px;color:var(--text)}
+  pre{
+    padding:16px;overflow:auto;font-family:ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    font-size:clamp(12px,1.35vw,14.5px);line-height:1.6;flex:1;tab-size:4;
+    counter-reset:ln;
+  }
+  pre .l{display:block;counter-increment:ln;white-space:pre}
+  pre .l::before{content:counter(ln);display:inline-block;width:2.2em;margin-right:12px;text-align:right;color:#46527a}
+  .k{color:var(--purple)} .s{color:var(--yellow)} .n{color:var(--cyan)}
+  .p{color:#7f8bab} .m{color:var(--red);font-weight:700}
+  .hl{background:rgba(77,226,255,.18);border-radius:3px;outline:1px solid rgba(77,226,255,.5)}
+
+  .decoder{
+    padding:12px 16px;border-top:1px dashed var(--line);font-size:13px;color:var(--muted);
+    display:none;font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.7
+  }
+  .decoder.open{display:block}
+  .decoder b{color:var(--cyan)}
+
+  .actions{display:flex;flex-direction:column;align-items:center;gap:14px;margin:26px 0}
+  button{
+    cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;
+    border-radius:12px;border:2px solid var(--green);background:rgba(57,255,136,.1);color:var(--green);
+    padding:16px 28px;font-size:clamp(14px,2vw,19px);transition:.18s;
+  }
+  button:hover:not(:disabled){background:var(--green);color:#04120a;box-shadow:0 0 28px rgba(57,255,136,.6);transform:translateY(-2px)}
+  button:disabled{opacity:.6;cursor:wait}
+  button.alt{border-color:var(--purple);color:var(--purple);background:rgba(167,123,255,.1);font-size:14px;padding:10px 18px}
+  button.alt:hover{background:var(--purple);color:#14082b;box-shadow:0 0 22px rgba(167,123,255,.6)}
+
+  .loader{display:none;width:min(520px,90%)}
+  .loader.on{display:block}
+  .bar{height:12px;border-radius:99px;background:#1b2340;overflow:hidden;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--green));transition:width 1.6s ease}
+  .loader p{margin-top:8px;text-align:center;color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:13px}
+
+  #results{display:none}
+  #results.on{display:block;animation:up .5s ease}
+  @keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .outs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+  @media(max-width:860px){.outs{grid-template-columns:1fr}}
+  .term{
+    background:#05070c;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;color:var(--green)
+  }
+  .term small{display:block;color:var(--muted);margin-bottom:6px;font-size:12px}
+  .okmsg{
+    text-align:center;padding:14px;border-radius:12px;margin-bottom:18px;
+    border:1px solid var(--green);background:rgba(57,255,136,.08);color:var(--green);font-weight:600
+  }
+  .metrics{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .metrics h2{font-size:17px;color:var(--cyan);margin-bottom:4px;font-family:ui-monospace,Menlo,monospace}
+  .note{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+  .row{display:grid;grid-template-columns:170px 1fr;gap:12px;align-items:center;margin:12px 0}
+  @media(max-width:600px){.row{grid-template-columns:1fr}}
+  .row .lab{font-size:14px}
+  .bars{display:flex;flex-direction:column;gap:6px}
+  .b{display:flex;align-items:center;gap:10px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+  .b span.t{width:70px;color:var(--muted)}
+  .b .fill{height:16px;border-radius:5px;width:0;transition:width 1s ease;min-width:4px}
+  .fill.g{background:var(--green)} .fill.r{background:var(--red)}
+  .b em{font-style:normal}
+  .cost{
+    margin-top:18px;padding:14px;border-radius:12px;border:1px dashed var(--purple);
+    background:rgba(167,123,255,.07);font-size:14.5px;line-height:1.6
+  }
+  .cost strong{color:var(--purple)}
+  footer{margin-top:30px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span id="typed"></span><span class="cursor">&nbsp;</span></h1>
+  <p class="sub">Protegendo software em chips ARM contra engenharia reversa.</p>
+  <div class="badges">
+    <span class="badge g">[ STATUS: PROTEGIDO ]</span>
+    <span class="badge c">[ ALVO: PROCESSADOR ARM ]</span>
+    <span class="badge">[ USP · SÃO CARLOS ]</span>
+  </div>
+</header>
+
+<div class="grid">
+  <section class="card good">
+    <div class="card-h"><span>🟢 CÓDIGO HUMANO (NORMAL)</span><span class="mood">Fácil de ler 🤓</span></div>
+    <pre id="codeGood"></pre>
+  </section>
+  <section class="card bad">
+    <div class="card-h"><span>🔴 CÓDIGO OFUSCADO (ZOADO)</span><span class="mood">Nó na cabeça 🤯</span></div>
+    <pre id="codeBad"></pre>
+    <div class="decoder" id="decoder">
+      <b>Chave secreta (tradução):</b><br>
+      _a → printf (escrever na tela)<br>
+      _b → &gt;= (maior ou igual)<br>
+      _c → int (número inteiro)<br>
+      _d → if (se)  ·  _e → else (senão)  ·  _f → return<br>
+      _0x99 → idade<br>
+      A conta gigante <b>(x·x + x) % 2 == 0</b> é sempre verdadeira: é uma "isca" que não serve pra nada!
+    </div>
+  </section>
+</div>
+
+<div class="actions">
+  <button class="alt" id="btnDecode">🔑 REVELAR SEGREDO</button>
+  <button id="btnRun">[ ⚡ EXECUTAR E ANALISAR NO CHIP ARM ]</button>
+  <div class="loader" id="loader">
+    <div class="bar"><i id="barFill"></i></div>
+    <p id="loadTxt">Compilando para ARM...</p>
+  </div>
+</div>
+
+<div id="results">
+  <div class="outs">
+    <div class="term"><small>🟢 saída do código normal</small>&gt;&gt; Saída: Aprovado na festa!</div>
+    <div class="term"><small>🔴 saída do código ofuscado</small>&gt;&gt; Saída: Aprovado na festa!</div>
+  </div>
+  <div class="okmsg">✅ Resultado IDÊNTICO! O chip ARM do seu celular entende os dois do mesmo jeito.</div>
+
+  <div class="metrics">
+    <h2>📊 ANÁLISE TEMPORAL E DESEMPENHO</h2>
+    <p class="note">⚠️ Valores simulados e ilustrativos para a demonstração. Na pesquisa de verdade, esses números são medidos no chip.</p>
+
+    <div class="row"><div class="lab">⏱️ Tempo de execução</div>
+      <div class="bars">
+        <div class="b"><span class="t">Normal</span><div class="fill g" id="tG"></div><em id="tGv"></em></div>
+        <div class="b"><span class="t">Ofuscado</span><div class="fill r" id="tR"></div><em id="tRv"></em></div>
+      </div></div>
+
+    <div class="row"><div class="lab">🧮 Instruções no chip ARM</div>
+      <div class="bars">
+        <div class="b"><span class="t">Normal</span><div class="fill g" id="iG"></div><em id="iGv"></em></div>
+        <div class="b"><span class="t">Ofuscado</span><div class="fill r" id="iR"></div><em id="iRv"></em></div>
+      </div></div>
+
+    <div class="cost" id="cost"></div>
+  </div>
+</div>
+
+<footer>Projeto de pesquisa · Metodologia de Pesquisa em Computação · ICMC-USP</footer>
+</div>
+
+<script>
+/* ---------- Códigos ---------- */
+const good = `#include <stdio.h>
+
+int main() {
+    int idade = 18;
+
+    if (idade >= 18) {
+        printf("Aprovado na festa!\\n");
+    } else {
+        printf("Volta pra casa!\\n");
+    }
+    return 0;
+}`;
+
+const bad = `#include <stdio.h>
+#define _a printf
+#define _b >=
+#define _c int
+#define _d if
+#define _e else
+#define _f return
+
+_c main() {
+    _c _0x99 = 18;
+
+    _d ((_0x99*_0x99 + _0x99) % 2 == 0) {
+        _d (_0x99 _b 18) {
+            _a("Aprovado na festa!\\n");
+        } _e {
+            _a("Volta pra casa!\\n");
+        }
+    } _e {
+        _a("%d\\n", _0x99 * 31337);
+    }
+    _f 0;
+}`;
+
+/* ---------- Syntax highlight (passagem única) ---------- */
+function esc(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function highlight(src){
+  const re=/(#\w+)|("(?:[^"\\]|\\.)*")|\b(int|if|else|return)\b|\b(_0x99|_[a-f])\b|\b(\d+)\b/g;
+  return src.split("\n").map(line=>{
+    const out=esc(line).replace(re,(m,pp,str,kw,mac,num)=>{
+      if(pp) return `<span class="p">${m}</span>`;
+      if(str) return `<span class="s">${m}</span>`;
+      if(kw) return `<span class="k">${m}</span>`;
+      if(mac) return `<span class="m">${m}</span>`;
+      if(num) return `<span class="n">${m}</span>`;
+      return m;
+    });
+    return `<span class="l">${out||" "}</span>`;
+  }).join("");
+}
+document.getElementById("codeGood").innerHTML=highlight(good);
+document.getElementById("codeBad").innerHTML=highlight(bad);
+
+/* ---------- Typing effect ---------- */
+const title="[ PROJETO USP: O SEGREDO DO CÓDIGO ]";
+let ti=0; const typed=document.getElementById("typed");
+(function type(){ if(ti<=title.length){typed.textContent=title.slice(0,ti++);setTimeout(type,55);} })();
+
+/* ---------- Som opcional (bipe curto) ---------- */
+let ac;
+function beep(f=660,d=.07){
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type="square";o.frequency.value=f;g.gain.value=.03;
+    o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d);
+  }catch(e){}
+}
+
+/* ---------- Revelar segredo ---------- */
+const dec=document.getElementById("decoder"), btnD=document.getElementById("btnDecode");
+btnD.onclick=()=>{
+  beep(880);
+  dec.classList.toggle("open");
+  btnD.textContent=dec.classList.contains("open")?"🙈 ESCONDER SEGREDO":"🔑 REVELAR SEGREDO";
+};
+
+/* ---------- Simulação ---------- */
+const btn=document.getElementById("btnRun"), loader=document.getElementById("loader"),
+      bar=document.getElementById("barFill"), txt=document.getElementById("loadTxt"),
+      res=document.getElementById("results");
+
+btn.onclick=()=>{
+  beep(520); btn.disabled=true; res.classList.remove("on");
+  loader.classList.add("on"); bar.style.transition="none"; bar.style.width="0";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.transition="width 1.6s ease";bar.style.width="100%";}));
+  const steps=["Compilando para ARM...","Montando instruções...","Executando no chip..."];
+  steps.forEach((s,i)=>setTimeout(()=>{txt.textContent=s;beep(400+i*120,.05)},i*550));
+  setTimeout(showResults,1800);
+};
+
+function rnd(a,b){return a+Math.random()*(b-a)}
+function showResults(){
+  loader.classList.remove("on"); btn.disabled=false; beep(990,.12);
+  res.classList.add("on");
+
+  const tG=rnd(.010,.014), tR=tG*rnd(1.45,1.7);
+  const iG=Math.round(rnd(13,15)), iR=iG+Math.round(rnd(16,19));
+  const tMax=tR*1.05, iMax=iR*1.05;
+
+  setBar("tG","tGv",tG/tMax,tG.toFixed(3)+" ms");
+  setBar("tR","tRv",tR/tMax,tR.toFixed(3)+" ms");
+  setBar("iG","iGv",iG/iMax,iG+" instruções");
+  setBar("iR","iRv",iR/iMax,iR+" instruções");
+
+  const pct=Math.round((iR/iG-1)*100), tp=Math.round((tR/tG-1)*100);
+  document.getElementById("cost").innerHTML=
+    `<strong>💸 Custo da ofuscação:</strong> o chip processa os dois, mas o código ofuscado precisou de `+
+    `<strong>+${iR-iG} instruções</strong> (≈ ${pct}% a mais) e ficou ≈ ${tp}% mais lento. `+
+    `É essa troca que eu estudo: <strong>quanto "embaralhar" sem deixar o celular lento ou gastando bateria?</strong>`;
+}
+function setBar(id,vid,frac,label){
+  const el=document.getElementById(id); el.style.width="0";
+  setTimeout(()=>el.style.width=Math.max(4,frac*60)+"%",50);
+  document.getElementById(vid).textContent=label;
+}
+</script>
+</body>
+</html>
