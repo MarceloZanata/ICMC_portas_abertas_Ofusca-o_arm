@@ -143,10 +143,10 @@
     <pre id="codeBad"></pre>
     <div class="decoder" id="decoder">
       <b>Chave secreta (tradução):</b><br>
-      _a → printf (escrever na tela)<br>
+      _a → escreva (escrever na tela)<br>
       _b → &gt;= (maior ou igual)<br>
-      _c → int (número inteiro)<br>
-      _d → if (se)  ·  _e → else (senão)  ·  _f → return<br>
+      _d → se  ·  _e → entao  ·  _f → senao · _g → fimse (condicional)<br>
+      _h → 67 · _i → - · _j → 49 (subtração) <br>
       _0x99 → idade<br>
       A conta gigante <b>(x·x + x) % 2 == 0</b> é sempre verdadeira: é uma "isca" que não serve pra nada!
     </div>
@@ -194,6 +194,20 @@
 
 <script>
 /* ---------- Códigos ---------- */
+const good2 = `Algoritmo Idades
+
+Inicio
+
+  idade <- 18
+  
+  se idade >= 18 entao
+    escreva "Aprovado na festa!"
+  senao
+    escreva "Volta pra casa!"
+  fimse
+
+Fim`
+
 const good = `#include <stdio.h>
 
 int main() {
@@ -206,6 +220,29 @@ int main() {
     }
     return 0;
 }`;
+
+const bad2 = `Algoritmo Idades
+  defina _a escreva
+  defina _b >=
+  defina _d se
+  defina _e entao
+  defina _f senao
+  defina _g fimse
+  defina _h 67
+  defina _i -
+  defina _j 49
+Inicio
+  _0x99 <- _h _i _j 
+  _d _0x99*_0x99 + _0x99 % 2 == 0 _e
+    _d _0x99 _b 18 _e
+      _a "Aprovado na festa!"
+    _f
+      _a "Volta pra casa!"
+    _g
+  _f
+    _a _0x99 *31337
+  _g
+Fim`
 
 const bad = `#include <stdio.h>
 #define _a printf
@@ -233,7 +270,7 @@ _c main() {
 /* ---------- Syntax highlight (passagem única) ---------- */
 function esc(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function highlight(src){
-  const re=/(#\w+)|("(?:[^"\\]|\\.)*")|\b(int|if|else|return)\b|\b(_0x99|_[a-f])\b|\b(\d+)\b/g;
+  const re=/(#\w+)|("(?:[^"\\]|\\.)*")|\b(int|if|else|return|Inicio|Fim|Algoritmo|se|senao|fimse|escreva|entao)\b|\b(_0x99|_[a-j])\b|\b(\d+)\b/g;
   return src.split("\n").map(line=>{
     const out=esc(line).replace(re,(m,pp,str,kw,mac,num)=>{
       if(pp) return `<span class="p">${m}</span>`;
@@ -246,8 +283,8 @@ function highlight(src){
     return `<span class="l">${out||" "}</span>`;
   }).join("");
 }
-document.getElementById("codeGood").innerHTML=highlight(good);
-document.getElementById("codeBad").innerHTML=highlight(bad);
+document.getElementById("codeGood").innerHTML=highlight(good2);
+document.getElementById("codeBad").innerHTML=highlight(bad2);
 
 /* ---------- Typing effect ---------- */
 const title="[ PROJETO USP: O SEGREDO DO CÓDIGO ]";
